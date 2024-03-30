@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "f1r3bas3-1n-d3pth": {
+      "hosting": {
+        "firebase-in-depth": [
+          "f1r3bas3-1n-d3pth"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "f1r3bas3-1n-d3pth"
+  }
+}

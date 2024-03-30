@@ -22,7 +22,6 @@
           "error",
           {
             "type": "element",
-            "prefix": "firebase-in-depth",
             "style": "kebab-case"
           }
         ]
