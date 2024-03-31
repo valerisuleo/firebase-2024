@@ -14,8 +14,10 @@ This README outlines how to integrate Firebase into an Angular application, focu
 Add Firebase and AngularFire to your project:
 
 ```bash
-npm install firebase @angular/fire
+ng add @angular/fire
 ```
+
+> Nx: `npm install @angular/fire && npx nx g @angular/fire:ng-add`
 
 ### Step 2: Obtain Your Firebase Configuration
 
