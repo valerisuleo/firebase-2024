@@ -157,6 +157,101 @@ Execute the script from the `backend` directory to populate your Firestore datab
 node populateFirestore.js
 ```
 
+
+Improving the explanation and functionality for dealing with nested objects, like embedding lessons into courses based on matching `seqNo` and `courseId`, involves clarifying the process and ensuring the code efficiently handles these relationships. Here’s an enhanced version:
+
+## Handling Nested Firestore Objects
+
+When structuring data in Firestore, it's common to encounter scenarios where you need to nest related objects. For instance, each course might have multiple lessons. Here's how to effectively embed lessons within courses, utilizing their `seqNo` and `courseId` to establish the relationship.
+
+### Data Structure
+
+**Courses:**
+
+```javascript
+const courseData = [
+    {
+        titles: {
+            description: 'Angular for Beginners',
+            longDescription: 'Establish a solid layer of fundamentals, learn what\'s under the hood of Angular'
+        },
+        iconUrl: 'https://angular-academy.s3.amazonaws.com/thumbnails/angular2-for-beginners-small-v2.png',
+        courseListIcon: 'https://angular-academy.s3.amazonaws.com/main-logo/main-page-logo-small-hat.png',
+        categories: ['BEGINNER'],
+        lessonsCount: 10,
+        seqNo: 5,
+        url: 'angular-for-beginners'
+    },
+    // More courses...
+];
+```
+
+**Lessons:**
+
+```javascript
+const lessonsData = [
+    {
+        id: 1,
+        description: 'Angular Tutorial For Beginners - Build Your First App - Hello World Step By Step',
+        duration: '4:17',
+        seqNo: 1,
+        courseId: 5
+    },
+    {
+        id: 2,
+        description: 'Building Your First  Component - Component Composition',
+        duration: '2:07',
+        seqNo: 2,
+        courseId: 5
+    },
+    // More lessons...
+];
+```
+
+### Population Script
+
+The `populateDB` function facilitates embedding lessons within their corresponding courses by matching each lesson's `courseId` with the course's `seqNo`.
+
+```javascript
+async function populateDB(
+    parentCollectionName,
+    parentData,
+    nestedCollectionName = null,
+    nestedData = null,
+    linkField = null
+) {
+    console.log(`Populating ${parentCollectionName} data...`);
+
+    parentData.forEach(async (item) => {
+        const parentRef = db.collection(parentCollectionName).doc();
+        await parentRef.set(item);
+        console.log(`Added course: ${item.titles.description}`);
+
+        if (nestedCollectionName && nestedData && linkField) {
+            const nestedItemsToAdd = nestedData.filter(nestedItem => nestedItem[linkField] === item.seqNo);
+
+            for (const nestedItem of nestedItemsToAdd) {
+                await parentRef.collection(nestedCollectionName).add(nestedItem);
+                console.log(`-- Added lesson to ${item.titles.description}: ${nestedItem.description}`);
+            }
+        }
+    });
+
+    console.log(`Successfully populated ${parentCollectionName} with nested ${nestedCollectionName} data (if applicable).`);
+}
+
+// Example usage
+populateDB(
+    'courses',
+    courseData,
+    'lessons',
+    lessonsData,
+    'courseId'
+).catch(console.error);
+```
+
+
+
 ## Conclusion
 
 By following these instructions, you will populate your Firestore database with the provided data, ensuring a quick and automated way to seed your database for development or testing purposes.

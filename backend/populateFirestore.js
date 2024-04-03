@@ -1,54 +1,66 @@
-const admin = require('firebase-admin');
+const db = require('./firebaseAdminInit');
+const mock = require('./courses');
 
-// Initialize Firebase Admin SDK with your service account
-const serviceAccount = require('../service_account.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// const collectionName = 'courses'; // Firestore collection name
 
-const db = admin.firestore();
+// async function populateDB() {
+//   console.log(`Populating the '${collectionName}' collection with courses data...`);
 
-// Your provided course data
-const coursesData = [
-    {
-        titles: {
-            description: 'Serverless Angular with Firebase Course',
-            longDescription: 'Serveless Angular with Firestore, Firebase Storage & Hosting, Firebase Cloud Functions & AngularFire'
-        },
-        iconUrl: 'https://s3-us-west-1.amazonaws.com/angular-university/course-images/serverless-angular-small.png',
-        lessonsCount: 10,
-        categories: ['BEGINNER'],
-        seqNo: 0,
-        url: 'serverless-angular'
-    },
-    {
-        titles: {
-            description: 'Angular Core Deep Dive',
-            longDescription: 'A detailed walk-through of the most important part of Angular - the Core and Common modules'
-        },
-        iconUrl: 'https://s3-us-west-1.amazonaws.com/angular-university/course-images/angular-core-in-depth-small.png',
-        lessonsCount: 10,
-        categories: ['BEGINNER'],
-        seqNo: 2,
-        url: 'angular-core-course'
-    }
-];
+//   const batch = db.batch();
 
-const collectionName = 'courses'; // Firestore collection name
+//   mock.coursesData.forEach(course => {
+//     const docRef = db.collection(collectionName).doc(); // Let Firestore generate the document ID
+//     batch.set(docRef, course);
+//   });
 
-async function populateDB() {
-  console.log(`Populating the '${collectionName}' collection with courses data...`);
+//   await batch.commit();
 
-  const batch = db.batch();
+//   console.log(`Successfully added ${mock.coursesData.length} documents to the '${collectionName}' collection.`);
+// }
 
-  coursesData.forEach(course => {
-    const docRef = db.collection(collectionName).doc(); // Let Firestore generate the document ID
-    batch.set(docRef, course);
-  });
+// populateDB().catch(console.error);
 
-  await batch.commit();
 
-  console.log(`Successfully added ${coursesData.length} documents to the '${collectionName}' collection.`);
+async function populateDB(
+    parentCollectionName,
+    parentData,
+    nestedCollectionName = null,
+    nestedData = null,
+    linkField = null
+) {
+    console.log(`Populating ${parentCollectionName} data...`);
+
+    // Using forEach to iterate over the parent data
+    parentData.forEach(async (item) => {
+        const parentRef = db.collection(parentCollectionName).doc(); // Create a new document reference for a parent item
+        await parentRef.set(item); // Add parent item data
+
+        // Check if nested collection data and linking field are provided
+        if (nestedCollectionName && nestedData && linkField) {
+            console.log(`Populating nested ${nestedCollectionName} data...`);
+
+            const nestedItemsToAdd = nestedData.filter(
+                (nestedItem) => nestedItem[linkField] === item.seqNo
+            );
+            
+            nestedItemsToAdd.forEach(async (nestedItem) => {
+                await parentRef
+                    .collection(nestedCollectionName)
+                    .add(nestedItem); // Add nested item data to the sub-collection
+            });
+        }
+    });
+
+    console.log(
+        `Successfully populated ${parentCollectionName} and ${nestedCollectionName} data (if provided).`
+    );
 }
 
-populateDB().catch(console.error);
+// Example usage
+populateDB(
+    'courses',
+    mock.coursesData,
+    'lessons',
+    mock.lessonsData,
+    'courseId'
+).catch(console.error);
